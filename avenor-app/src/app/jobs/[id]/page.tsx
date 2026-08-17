@@ -25,7 +25,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const job = await getJob(params.id);
   if (!job) return { title: 'Position not found — Avenor Medical' };
 
-  const facility = (job.facilities as { name: string } | null)?.name ?? '';
+  const facilityRow = Array.isArray(job.facilities) ? job.facilities[0] : job.facilities;
+  const facility = (facilityRow as { name: string } | null)?.name ?? '';
   return {
     title: `${job.title} — ${facility} | Avenor Medical`,
     description: `${job.profession} position in ${job.city}, ${job.state}. Fully credentialed placement through Avenor Medical.`,
@@ -41,7 +42,8 @@ export default async function JobDetailPage({ params }: Props) {
   const job = await getJob(params.id);
   if (!job) notFound();
 
-  const facility = job.facilities as { name: string; type: string } | null;
+  const facilityRow = Array.isArray(job.facilities) ? job.facilities[0] : job.facilities;
+  const facility = facilityRow as { name: string; type: string } | null;
 
   // Google Jobs structured data — puts these listings in Google's job search.
   const jobPostingSchema = {
