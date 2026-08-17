@@ -180,7 +180,9 @@ export async function POST(
 
   const matches = (jobs ?? [])
     .map((j: JobFacts) => scoreJob(candidate, j))
-    .filter((m): m is NonNullable<typeof m> => m !== null)
+    .filter(
+      (m: ReturnType<typeof scoreJob>): m is NonNullable<typeof m> => m !== null,
+    )
     .sort((a, b) => b.matchPct - a.matchPct)
     .slice(0, 10);
 
