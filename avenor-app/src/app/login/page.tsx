@@ -1,10 +1,28 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { supabaseBrowser } from '@/services/supabase/client';
 
+// useSearchParams() forces client-side rendering, so Next.js requires the
+// component that reads it to sit inside a Suspense boundary.
 export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="flex min-h-screen items-center justify-center bg-navy px-4">
+          <div className="w-full max-w-md border border-brass/30 bg-white p-10 shadow-2xl">
+            <h1 className="font-serif text-2xl text-navy">Sign in to Avenor</h1>
+          </div>
+        </main>
+      }
+    >
+      <LoginForm />
+    </Suspense>
+  );
+}
+
+function LoginForm() {
   const router = useRouter();
   const params = useSearchParams();
   const [email, setEmail] = useState('');
