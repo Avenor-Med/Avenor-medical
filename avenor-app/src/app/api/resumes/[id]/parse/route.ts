@@ -3,7 +3,7 @@ import { supabaseServer, supabaseAdmin } from '@/services/supabase/server';
 import { audit } from '@/services/audit';
 import { extractText } from '@/services/extract';
 import { specialtiesPromptList } from '@/constants/taxonomy';
-import { scoreJob, licenseChecker, type CandidateFacts } from '@/services/scoring';
+import { scoreJob, licenseChecker, type CandidateFacts, type JobFacts } from '@/services/scoring';
 import { rateLimit } from '@/utils/ratelimit';
 
 export const runtime = 'nodejs';
@@ -179,7 +179,7 @@ export async function POST(
   };
 
   const matches = (jobs ?? [])
-    .map((j) => scoreJob(candidate, j))
+    .map((j: JobFacts) => scoreJob(candidate, j))
     .filter((m): m is NonNullable<typeof m> => m !== null)
     .sort((a, b) => b.matchPct - a.matchPct)
     .slice(0, 10);
