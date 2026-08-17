@@ -178,12 +178,12 @@ export async function POST(
     certifications: (profile.certifications as string[]) ?? [],
   };
 
-  const matches = (jobs ?? [])
+  type Match = NonNullable<ReturnType<typeof scoreJob>>;
+
+  const matches = ((jobs ?? []) as JobFacts[])
     .map((j: JobFacts) => scoreJob(candidate, j))
-    .filter(
-      (m: ReturnType<typeof scoreJob>): m is NonNullable<typeof m> => m !== null,
-    )
-    .sort((a, b) => b.matchPct - a.matchPct)
+    .filter((m: Match | null): m is Match => m !== null)
+    .sort((a: Match, b: Match) => b.matchPct - a.matchPct)
     .slice(0, 10);
 
   await admin.from('job_matches').delete().eq('resume_id', params.id);
