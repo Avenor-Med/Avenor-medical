@@ -1,0 +1,208 @@
+// Healthcare Staffing Platform — Prisma schema
+// SQLite for local dev; swap provider to "postgresql" for production.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ──────────────────────────────────────────────────────────────────────
+//  USERS  (every login lives here; role drives which dashboard they see)
+// ──────────────────────────────────────────────────────────────────────
+model User {
+  id              String   @id @default(cuid())
+  email           String   @unique
+  passwordHash    String
+  name            String
+  phone           String?
+  role            String   // ADMIN | RECRUITER | CS | PRACTITIONER | FACILITY
+  active          Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // optional 1:1 profile records by role
+  practitioner    Practitioner?
+  facilityUser    FacilityUser?
+
+  // who created/edited what
+  jobsCreated     Job[]            @relation("JobCreatedBy")
+  pipelineEvents  PipelineEvent[]
+}
+
+// ──────────────────────────────────────────────────────────────────────
+//  PRACTITIONER  (1:1 with User where role = PRACTITIONER)
+// ──────────────────────────────────────────────────────────────────────
+model Practitioner {
+  id                  String   @id @default(cuid())
+  userId              String   @unique
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // structured profile
+  profession          String?       // RN / NP / MD / PA / LPN / Tech
+  specialty           String?       // ICU / ER / Peds / Med-Surg / OR / etc.
+  yearsExperience     Int?
+  licenseNumber       String?
+  licenseState        String?
+  city                String?
+  state               String?
+  bio                 String?
+
+  // availability
+  availableFrom       DateTime?
+  availableHoursPerWk Int?
+  willingToTravel     Boolean  @default(false)
+
+  // money
+  rateExpectationUsd  Float?        // hourly USD
+
+  // approval
+  approvalStatus      String   @default("PENDING")  // PENDING | APPROVED | REJECTED
+  approvalNote        String?
+  approvedAt          DateTime?
+
+  // AI-extracted summary (from CV) — kept for reference even after approval
+  aiSummary           String?
+
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  documents           Document[]
+  applications        Application[]
+  certifications      Certification[]
+}
+
+// CV / License / Certification uploads
+model Document {
+  id              String   @id @default(cuid())
+  practitionerId  String
+  practitioner    Practitioner @relation(fields: [practitionerId], references: [id], onDelete: Cascade)
+  type            String   // CV | LICENSE | CERTIFICATION
+  fileName        String
+  storagePath     String   // relative to /public/uploads
+  size            Int
+  mimeType        String
+  uploadedAt      DateTime @default(now())
+
+  // For LICENSE / CERTIFICATION: structured metadata
+  label           String?
+  issuingBody     String?
+  expiresAt       DateTime?
+}
+
+model Certification {
+  id              String   @id @default(cuid())
+  practitionerId  String
+  practitioner    Practitioner @relation(fields: [practitionerId], references: [id], onDelete: Cascade)
+  name            String        // e.g. "BLS", "ACLS", "PALS"
+  issuingBody     String?
+  expiresAt       DateTime?
+  createdAt       DateTime @default(now())
+}
+
+// ──────────────────────────────────────────────────────────────────────
+//  FACILITY  (the hospital / clinic that books practitioners)
+// ──────────────────────────────────────────────────────────────────────
+model Facility {
+  id          String   @id @default(cuid())
+  name        String
+  type        String?   // Hospital / Clinic / SNF / Surgery Center / Home Health
+  city        String
+  state       String
+  address     String?
+  contactName String?
+  contactEmail String?
+  contactPhone String?
+  notes       String?
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  jobs        Job[]
+  facilityUsers FacilityUser[]
+}
+
+// Optional login users tied to a facility (to view "their" candidates only)
+model FacilityUser {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  facilityId  String
+  facility    Facility @relation(fields: [facilityId], references: [id], onDelete: Cascade)
+  title       String?
+}
+
+// ──────────────────────────────────────────────────────────────────────
+//  JOB POSTING  (created by CS for a Facility)
+// ──────────────────────────────────────────────────────────────────────
+model Job {
+  id            String   @id @default(cuid())
+  facilityId    String
+  facility      Facility @relation(fields: [facilityId], references: [id], onDelete: Cascade)
+  createdById   String
+  createdBy     User     @relation("JobCreatedBy", fields: [createdById], references: [id])
+
+  title         String        // e.g. "ICU Travel Nurse"
+  profession    String        // RN / NP / etc.
+  specialty     String?
+  city          String
+  state         String
+  shiftType     String?       // Day / Night / Rotating
+  hoursPerWeek  Int?
+  durationWeeks Int?          // contract length
+  startDate     DateTime?
+  rateUsd       Float         // hourly
+  description   String
+  requirements  String?       // free-text bullets
+  status        String   @default("OPEN")  // OPEN | FILLED | CLOSED
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  applications  Application[]
+}
+
+// ──────────────────────────────────────────────────────────────────────
+//  APPLICATION  (Practitioner ↔ Job, with pipeline stage)
+// ──────────────────────────────────────────────────────────────────────
+model Application {
+  id              String   @id @default(cuid())
+  jobId           String
+  job             Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  practitionerId  String
+  practitioner    Practitioner @relation(fields: [practitionerId], references: [id], onDelete: Cascade)
+
+  // Pipeline stage
+  stage           String   @default("APPLIED")  // APPLIED | UNDER_REVIEW | PRESENTED | INTERVIEWING | ACCEPTED | REJECTED
+  presentedToFacilityAt DateTime?
+  decisionNote    String?
+  rejectionReason String?
+
+  // For accepted placements — used to compute earnings
+  startedAt       DateTime?
+  endedAt         DateTime?
+  hoursLogged     Float    @default(0)   // optional, manual for prototype
+
+  appliedAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  events          PipelineEvent[]
+
+  @@unique([jobId, practitionerId])
+}
+
+// Audit log of every pipeline transition
+model PipelineEvent {
+  id              String   @id @default(cuid())
+  applicationId   String
+  application     Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  fromStage       String?
+  toStage         String
+  byUserId        String?
+  byUser          User?    @relation(fields: [byUserId], references: [id])
+  note            String?
+  occurredAt      DateTime @default(now())
+}

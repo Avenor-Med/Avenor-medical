@@ -1,0 +1,32 @@
+/* Design tokens — the single source of colour, type, and spacing values.
+   Tailwind's theme extends from these same numbers (tailwind.config.js), so
+   there is exactly one place to change a brand colour. */
+
+:root {
+  /* Brand */
+  --navy: #0f1b3a;
+  --navy-mid: #1f3a6b;
+  --cream: #f5efe0;
+  --cream-soft: #fbf9f4;
+  --brass: #c49b5c;
+  --brass-bright: #e3bc7a;
+  --brass-dark: #9a7338;
+
+  /* Text — paired with their intended surface */
+  --text-on-light: #1f2a44;
+  --text-on-light-muted: #5a6478;
+  --text-on-dark: #ede6d6;
+  --text-on-dark-muted: #a9b2c6;
+
+  /* Lines */
+  --line-light: #e2dbc9;
+  --line-dark: rgba(195, 160, 90, 0.22);
+
+  /* Type */
+  --font-serif: 'Playfair Display', Georgia, serif;
+  --font-sans: Inter, system-ui, -apple-system, sans-serif;
+
+  /* Motion — kept short; interactions must feel immediate */
+  --transition-fast: 0.12s ease-out;
+  --transition-base: 0.22s ease-out;
+}

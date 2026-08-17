@@ -1,0 +1,25 @@
+{
+  "name": "avenor-scrapers",
+  "version": "1.0.0",
+  "description": "Live jobs ingestion pipeline for Avenor Medical",
+  "type": "module",
+  "scripts": {
+    "ingest": "node ingest.js",
+    "test-adzuna": "node aggregators/adzuna.js",
+    "test-usajobs": "node aggregators/usajobs.js",
+    "test-jooble": "node aggregators/jooble.js",
+    "test-muse": "node aggregators/themuse.js",
+    "test-hca": "node hospitals/hca.js",
+    "test-mayo": "node hospitals/mayo.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.0",
+    "dotenv": "^16.4.5",
+    "playwright": "^1.47.0",
+    "p-limit": "^6.1.0",
+    "zod": "^3.23.8"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

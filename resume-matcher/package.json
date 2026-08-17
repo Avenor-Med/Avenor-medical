@@ -1,0 +1,23 @@
+{
+  "name": "atlas-resume-matcher",
+  "version": "1.0.0",
+  "description": "Bulk resume parser + job matcher using Claude API. Drop 50 doctor PDFs in ./sample-resumes/, run npm start, get matched positions.",
+  "main": "match.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node match.js",
+    "match": "node match.js",
+    "setup": "npm install"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.27.3",
+    "dotenv": "^16.4.5",
+    "pdf-parse": "^1.1.1",
+    "mammoth": "^1.8.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "author": "Avenor Medical",
+  "license": "UNLICENSED"
+}

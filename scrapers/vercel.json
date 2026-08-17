@@ -1,0 +1,13 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/ingest",
+      "schedule": "0 2 * * *"
+    }
+  ],
+  "functions": {
+    "api/cron/ingest.js": {
+      "maxDuration": 300
+    }
+  }
+}
