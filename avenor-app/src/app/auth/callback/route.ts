@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createServerClient } from '@supabase/ssr';
+import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 
 // Handles email-verification and password-reset redirects from Supabase.
@@ -16,7 +16,7 @@ export async function GET(request: Request) {
       {
         cookies: {
           getAll: () => cookieStore.getAll(),
-          setAll: (list) =>
+          setAll: (list: { name: string; value: string; options: CookieOptions }[]) =>
             list.forEach(({ name, value, options }) =>
               cookieStore.set(name, value, options),
             ),

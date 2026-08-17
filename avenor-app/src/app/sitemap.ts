@@ -25,7 +25,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       .order('posted_at', { ascending: false })
       .limit(5000);
 
-    const jobRoutes: MetadataRoute.Sitemap = (jobs ?? []).map((j) => ({
+    const jobRoutes: MetadataRoute.Sitemap = (
+      (jobs ?? []) as { id: string; updated_at: string | null }[]
+    ).map((j) => ({
       url: `${BASE}/jobs/${encodeURIComponent(j.id)}`,
       lastModified: j.updated_at ? new Date(j.updated_at) : undefined,
       changeFrequency: 'weekly' as const,

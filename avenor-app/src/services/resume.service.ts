@@ -1,6 +1,11 @@
 import { supabaseServer, supabaseAdmin } from '@/services/supabase/server';
 import { extractText } from '@/services/extract';
-import { scoreJob, licenseChecker, type CandidateFacts } from '@/services/scoring';
+import {
+  scoreJob,
+  licenseChecker,
+  type CandidateFacts,
+  type JobFacts,
+} from '@/services/scoring';
 import { audit } from '@/services/audit';
 import { specialtiesPromptList } from '@/constants/taxonomy';
 import { UPLOAD, MATCHING } from '@/constants/config';
@@ -177,10 +182,12 @@ export async function matchProfileToJobs(
     certifications: profile.certifications ?? [],
   };
 
-  const matches = (jobs ?? [])
-    .map((j) => scoreJob(candidate, j))
-    .filter((m): m is NonNullable<typeof m> => m !== null)
-    .sort((a, b) => b.matchPct - a.matchPct)
+  type Match = NonNullable<ReturnType<typeof scoreJob>>;
+
+  const matches = ((jobs ?? []) as JobFacts[])
+    .map((j: JobFacts) => scoreJob(candidate, j))
+    .filter((m: Match | null): m is Match => m !== null)
+    .sort((a: Match, b: Match) => b.matchPct - a.matchPct)
     .slice(0, MATCHING.topMatches);
 
   await admin.from('job_matches').delete().eq('resume_id', resumeId);
